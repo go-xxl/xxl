@@ -12,14 +12,18 @@ type JobExecutor interface {
 	// Job add a job endpoint
 	Job(handlerName string, handler job.Func)
 
+	WithHealthCheck(path string, handler server.Handler)
+
 	Run()
 }
 
+type HealthFunc func(ctx *server.Context)
+
 // Executor Executor
 type Executor struct {
-	ctx     server.Context
 	opts    Options
 	address string
+	engine  *server.Engine
 }
 
 // NewExecutor create a JobExecutor
@@ -40,22 +44,27 @@ func NewExecutor(opts ...Option) JobExecutor {
 
 	e.address = utils.BuildEndPoint(opt.ExecutorIp, opt.ExecutorPort)
 	e.opts.RegistryValue = e.address
+	e.engine = server.New()
 	return e
 }
 
 // Run start job service
 func (e *Executor) Run() {
-	engine := server.New()
-	engine.SetBeforeHandlers(func(ctx *server.Context) {})
 
-	engine.SetAfterHandler(func(ctx *server.Context) {})
+	e.engine.SetBeforeHandlers(func(ctx *server.Context) {
+
+	})
+
+	e.engine.SetAfterHandler(func(ctx *server.Context) {
+
+	})
 
 	biz := NewExecutorService()
-	engine.AddRoute("/run", biz.Run)
-	engine.AddRoute("/kill", biz.Kill)
-	engine.AddRoute("/log", biz.Log)
-	engine.AddRoute("/beat", biz.Beat)
-	engine.AddRoute("/idleBeat", biz.IdleBeat)
+	e.engine.AddRoute("/run", biz.Run)
+	e.engine.AddRoute("/kill", biz.Kill)
+	e.engine.AddRoute("/log", biz.Log)
+	e.engine.AddRoute("/beat", biz.Beat)
+	e.engine.AddRoute("/idleBeat", biz.IdleBeat)
 
 	adm := admin.NewAdmApi()
 	adm.SetOpt(
@@ -71,10 +80,17 @@ func (e *Executor) Run() {
 
 	go func() {
 		adm.Register()
-		log.Fatalln(engine.Run(e.address))
+		log.Fatalln(e.engine.Run(e.address))
 	}()
 
 	utils.WatchSignal()
+}
+
+// WithHealthCheck ExecutorService's web health check endpoint
+func (e *Executor) WithHealthCheck(path string, handler server.Handler) {
+	if path != "" {
+		e.engine.AddRoute(path, handler)
+	}
 }
 
 func (e *Executor) Job(handlerName string, handler job.Func) {

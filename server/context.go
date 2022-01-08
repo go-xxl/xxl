@@ -70,6 +70,8 @@ func (ctx *Context) Copy() *Context {
 // resp
 
 func (ctx *Context) JSON(code int, data []byte) {
+	ctx.Writer.Header().Set("Content-Type", "application/json")
+	ctx.Writer.WriteHeader(code)
 	_, _ = ctx.Writer.Write(data)
 }
 

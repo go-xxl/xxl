@@ -7,6 +7,7 @@ import (
 	"github.com/go-xxl/xxl/utils"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"sync"
 )
 
@@ -73,7 +74,14 @@ func (engine *Engine) handleHTTPRequest(ctx *Context) {
 
 // AddRoute add web endpoint
 func (engine *Engine) AddRoute(path string, handler Handler) {
-	engine.funcHandler[path] = handler
+	engine.funcHandler[engine.formatRoute(path)] = handler
+}
+
+func (engine *Engine) formatRoute(path string) string {
+	if strings.HasPrefix(path, "/") {
+		return path
+	}
+	return "/" + path
 }
 
 func (engine *Engine) beforeHandler(ctx *Context) {
