@@ -70,6 +70,8 @@ func (ctx *Context) Copy() *Context {
 // resp
 
 func (ctx *Context) JSON(code int, data []byte) {
+	ctx.Writer.Header().Set("Content-Type", "application/json")
+	ctx.Writer.WriteHeader(code)
 	_, _ = ctx.Writer.Write(data)
 }
 
@@ -91,4 +93,50 @@ func (ctx *Context) Fail(msg string, data interface{}) {
 	}
 	log.Info(msg, log.Field("data", utils.ObjToStr(data)))
 	ctx.JSON(FailCode, utils.ObjToBytes(resp))
+}
+
+///////////////// sync map set
+
+func (ctx *Context) Set(key string, value interface{}) {
+	ctx.m.Store(key, value)
+}
+
+func (ctx *Context) Get(key string) (value interface{}, exist bool) {
+	return ctx.m.Load(key)
+}
+
+func (ctx *Context) GetString(key string) string {
+	if val, ok := ctx.Get(key); ok {
+		if value, isString := val.(string); isString {
+			return value
+		}
+	}
+	return ""
+}
+
+func (ctx *Context) GetStringOrDefault(key, defaultValue string) string {
+	if val, ok := ctx.Get(key); ok {
+		if value, isString := val.(string); isString {
+			return value
+		}
+	}
+	return defaultValue
+}
+
+func (ctx *Context) GetInt64(key string) int64 {
+	if val, ok := ctx.Get(key); ok {
+		if value, isInt64 := val.(int64); isInt64 {
+			return value
+		}
+	}
+	return 0
+}
+
+func (ctx *Context) GetInt64OrDefault(key string, defaultValue int64) int64 {
+	if val, ok := ctx.Get(key); ok {
+		if value, isInt64 := val.(int64); isInt64 {
+			return value
+		}
+	}
+	return defaultValue
 }

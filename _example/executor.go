@@ -33,5 +33,12 @@ func main() {
 		}
 	})
 
+	e.WithHealthCheck("/health", func(ctx *server.Context) {
+		ctx.Success("pong return", "pong")
+		return
+	})
+
+	e.WithDebug(true)
+
 	e.Run()
 }
