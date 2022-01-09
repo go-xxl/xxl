@@ -38,5 +38,7 @@ func main() {
 		return
 	})
 
+	e.WithDebug(true)
+
 	e.Run()
 }

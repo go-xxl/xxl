@@ -69,6 +69,8 @@ func (engine *Engine) handleHTTPRequest(ctx *Context) {
 		engine.afterHandler(ctx)
 		return
 	}
+
+	http.NotFound(ctx.Writer, ctx.Request)
 	return
 }
 
