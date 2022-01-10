@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"github.com/go-xxl/xxl/admin"
 	"github.com/go-xxl/xxl/job"
+	"github.com/go-xxl/xxl/log"
 	"github.com/go-xxl/xxl/server"
 	"github.com/go-xxl/xxl/utils"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"time"
 )
@@ -60,16 +62,25 @@ func (biz *ExecutorBiz) Run(ctx *server.Context) {
 
 	newCtx := ctx.Copy()
 	go func() {
-		resp := jobHandler.Fn(newCtx)
+		defer func() {
+			if e := recover(); e != nil {
+				log.GetLog().Error("task panic", zap.Any("e", e))
+			}
+		}()
 
-		var call []admin.HandleCallbackParams
-		call = append(call, admin.HandleCallbackParams{
-			LogId:      resp.LogID,
-			LogDateTim: resp.LogDateTime,
-			HandleCode: resp.HandleCode,
-			HandleMsg:  resp.HandleMsg,
-		})
-		admin.GetClient().Callback(call)
+		var resp job.Resp
+		defer func() {
+			var call []admin.HandleCallbackParams
+			call = append(call, admin.HandleCallbackParams{
+				LogId:      resp.LogID,
+				LogDateTim: resp.LogDateTime,
+				HandleCode: resp.HandleCode,
+				HandleMsg:  resp.HandleMsg,
+			})
+			admin.GetClient().Callback(call)
+		}()
+
+		resp = jobHandler.Fn(newCtx)
 	}()
 
 	traceId := newCtx.TraceId
@@ -110,7 +121,7 @@ func (biz *ExecutorBiz) Log(ctx *server.Context) {
 
 // Beat check alive
 func (biz *ExecutorBiz) Beat(ctx *server.Context) {
-	ctx.Success("", nil)
+	ctx.Success("beat ing...", nil)
 }
 
 // IdleBeat check job is alive
@@ -123,5 +134,5 @@ func (biz *ExecutorBiz) IdleBeat(ctx *server.Context) {
 		ctx.Fail("idleBeat is running, job's id is "+utils.Int2Str(param.JobID), "")
 		return
 	}
-	ctx.Success("params", param)
+	ctx.Success("idle beat ing...", param)
 }
