@@ -18,8 +18,8 @@ func SetLog(l Logger) {
 	logger = l
 }
 
-func Field(key string, data string) zap.Field {
-	return zap.String(key, data)
+func Field(key string, data interface{}) zap.Field {
+	return zap.Any(key, data)
 }
 
 func Debug(msg string, fields ...zap.Field) {

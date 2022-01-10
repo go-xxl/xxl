@@ -3,17 +3,18 @@
 # Installation
 
 ```go
-go get github.com/go-xxl/xxl
+go get github.com/go-xxl/xxl@v0.0.2
 ```
 
 # Quickstart
 
-```
+```go
 package main
 
 import (
 	"github.com/go-xxl/xxl"
 	"github.com/go-xxl/xxl/admin"
+	"github.com/go-xxl/xxl/job"
 	"github.com/go-xxl/xxl/server"
 	"github.com/go-xxl/xxl/utils"
 	"time"
@@ -30,12 +31,12 @@ func main() {
 		xxl.RegistryKey("demo-test"),
 	)
 
-	e.Job("/demo", func(ctx *server.Context) server.JobResp {
+	e.Job("/demo", func(ctx *server.Context) job.Resp {
 		param := ctx.Param
 
 		time.Sleep(time.Second * 30)
 
-		return server.JobResp{
+		return job.Resp{
 			LogID:       param.LogID,
 			LogDateTime: time.Now().Unix(),
 			HandleCode:  admin.SuccessCode,
@@ -43,8 +44,16 @@ func main() {
 		}
 	})
 
+	e.WithHealthCheck("/health", func(ctx *server.Context) {
+		ctx.Success("pong return", "pong")
+		return
+	})
+
+	e.WithDebug(true)
+
 	e.Run()
 }
+
 ```
 
 # Tree
