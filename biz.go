@@ -68,6 +68,10 @@ func (biz *ExecutorBiz) Run(ctx *server.Context) {
 			}
 		}()
 
+		defer func() {
+			job.GetRunningJobList().Del(utils.Int2Str(jobHandler.Id))
+		}()
+
 		var resp job.Resp
 		defer func() {
 			var call []admin.HandleCallbackParams
