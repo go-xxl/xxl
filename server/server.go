@@ -57,10 +57,17 @@ func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func (engine *Engine) handleHTTPRequest(ctx *Context) {
 
-	b, _ := ioutil.ReadAll(ctx.Request.Body)
-	_ = json.Unmarshal(b, &ctx.Param)
+	body, err := ioutil.ReadAll(ctx.Request.Body)
+	if err != nil {
+		http.Error(ctx.Writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	ctx.Request.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+	var prams RunReq
+	_ = json.Unmarshal(body, &prams)
+	ctx.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+
+	ctx.Param = &prams
 
 	rPath := ctx.Request.URL
 	if handler, ok := engine.funcHandler[rPath.Path]; ok {
