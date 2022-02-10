@@ -140,3 +140,13 @@ func (ctx *Context) GetInt64OrDefault(key string, defaultValue int64) int64 {
 	}
 	return defaultValue
 }
+
+// Reset reset ctx
+func (ctx *Context) Reset() *Context {
+	ctx.Writer = nil
+	ctx.Request = nil
+	ctx.Param = nil
+	ctx.TraceId = ""
+	ctx.m = sync.Map{}
+	return ctx
+}
