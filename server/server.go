@@ -46,9 +46,26 @@ func (engine *Engine) Run(addr ...string) error {
 
 func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	c := engine.pool.Get().(*Context)
+	c.Reset()
+
 	c.Writer = w
 	c.Request = req
 	c.TraceId = utils.Uuid()
+
+	bodyBytes, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	var prams RunReq
+	err = json.Unmarshal(bodyBytes, &prams)
+	if err != nil {
+		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	c.Param = &prams
 
 	engine.handleHTTPRequest(c)
 
@@ -56,12 +73,6 @@ func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (engine *Engine) handleHTTPRequest(ctx *Context) {
-
-	b, _ := ioutil.ReadAll(ctx.Request.Body)
-	_ = json.Unmarshal(b, &ctx.Param)
-
-	ctx.Request.Body = ioutil.NopCloser(bytes.NewBuffer(b))
-
 	rPath := ctx.Request.URL
 	if handler, ok := engine.funcHandler[rPath.Path]; ok {
 		engine.beforeHandler(ctx)
