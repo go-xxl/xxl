@@ -98,12 +98,12 @@ func (biz *ExecutorBiz) Kill(ctx *server.Context) {
 	runningJob, exist := job.GetRunningJobList().Get(utils.Int2Str(param.JobID))
 
 	if !exist {
-		ctx.Fail("job is not running ……, job's id is "+utils.Int2Str(param.JobID)+", job's name is "+param.ExecutorHandler, "")
+		ctx.Fail("job is not running ……, job's id is "+utils.Int2Str(runningJob.Id)+", job's name is "+runningJob.Name, "")
 		return
 	}
 	runningJob.Cancel()
 	job.GetRunningJobList().Del(utils.Int2Str(param.JobID))
-	ctx.Success("job is removed, job's id is "+utils.Int2Str(param.JobID)+", job's name is "+param.ExecutorHandler, "")
+	ctx.Success("job is removed, job's id is "+utils.Int2Str(runningJob.Id)+", job's name is "+runningJob.Name, "")
 }
 
 // Log job log
