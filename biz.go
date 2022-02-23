@@ -97,7 +97,7 @@ func (biz *ExecutorBiz) Kill(ctx *server.Context) {
 
 	runningJob, exist := job.GetRunningJobList().Get(utils.Int2Str(param.JobID))
 
-	if exist {
+	if !exist {
 		ctx.Fail("job is not running ……, job's id is "+utils.Int2Str(param.JobID)+", job's name is "+param.ExecutorHandler, "")
 		return
 	}
