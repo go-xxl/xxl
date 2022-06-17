@@ -82,10 +82,16 @@ func (adm *AdmApi) Register() {
 			<-t.C
 			t.Reset(LoopFrequency)
 		}
+
+		if adm.isStop {
+			t.Stop()
+		}
 	}()
 }
 
 func (adm *AdmApi) RegistryRemove() {
+
+	adm.isStop = true
 
 	opt := adm.opt
 
