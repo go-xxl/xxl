@@ -46,12 +46,15 @@ func (biz *ExecutorBiz) Run(ctx *server.Context) {
 		job.GetRunningJobList().Del(utils.Int2Str(param.JobID))
 	}
 
-	c := context.Background()
+	taskCtx := ctx.Copy()
 	if param.ExecutorTimeout > 0 {
-		jobHandler.Ext, jobHandler.Cancel = context.WithTimeout(c, time.Duration(param.ExecutorTimeout)*time.Second)
+		jobHandler.Ext, jobHandler.Cancel = context.WithTimeout(taskCtx.Request.Context(), time.Duration(param.ExecutorTimeout)*time.Second)
 	} else {
-		jobHandler.Ext, jobHandler.Cancel = context.WithCancel(c)
+		jobHandler.Ext, jobHandler.Cancel = context.WithCancel(taskCtx.Request.Context())
 	}
+
+
+    taskCtx.Request = taskCtx.Request.WithContext(jobHandler.Ext)
 
 	jobHandler.Id = param.JobID
 	jobHandler.Name = param.ExecutorHandler
@@ -60,7 +63,6 @@ func (biz *ExecutorBiz) Run(ctx *server.Context) {
 
 	job.GetRunningJobList().Set(utils.Int2Str(jobHandler.Id), jobHandler)
 
-	newCtx := ctx.Copy()
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
@@ -84,10 +86,10 @@ func (biz *ExecutorBiz) Run(ctx *server.Context) {
 			admin.GetClient().Callback(call)
 		}()
 
-		resp = jobHandler.Fn(newCtx)
+		resp = jobHandler.Fn(taskCtx)
 	}()
 
-	traceId := newCtx.TraceId
+	traceId := ctx.TraceId
 	ctx.Success("job is starting …… , job's id is "+utils.Int2Str(param.JobID)+", job's name is "+param.ExecutorHandler+"，job's traceId is "+traceId, "")
 }
 
