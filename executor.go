@@ -18,6 +18,10 @@ type JobExecutor interface {
 
 	WithDebug(isDebug bool)
 
+	BeforeHandler(handlers ...server.Handler)
+
+	AfterHandler(handlers ...server.Handler)
+
 	Run()
 }
 
@@ -55,15 +59,6 @@ func NewExecutor(opts ...Option) JobExecutor {
 
 // Run start job service
 func (e *Executor) Run() {
-
-	e.engine.SetBeforeHandlers(func(ctx *server.Context) {
-
-	})
-
-	e.engine.SetAfterHandler(func(ctx *server.Context) {
-
-	})
-
 	biz := NewExecutorService()
 	e.engine.AddRoute("/run", biz.Run)
 	e.engine.AddRoute("/kill", biz.Kill)
@@ -129,6 +124,14 @@ func (e *Executor) Job(handlerName string, handler job.Func) {
 		StartTime: 0,
 		EndTime:   0,
 	})
+}
+
+func (e *Executor) BeforeHandler(handlers ...server.Handler) {
+	e.engine.SetBeforeHandlers(handlers...)
+}
+
+func (e *Executor) AfterHandler(handlers ...server.Handler) {
+   e.engine.SetAfterHandler(handlers...)
 }
 
 func (e *Executor) WrapF(f func(w http.ResponseWriter, r *http.Request)) server.Handler {

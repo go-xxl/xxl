@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"github.com/go-xxl/xxl/log"
 	"github.com/go-xxl/xxl/utils"
 	"net/http"
@@ -19,15 +20,15 @@ type Context struct {
 // Context impl
 
 func (ctx *Context) Deadline() (deadline time.Time, ok bool) {
-	return
+	return ctx.Request.Context().Deadline()
 }
 
 func (ctx *Context) Done() <-chan struct{} {
-	return nil
+	return ctx.Request.Context().Done()
 }
 
 func (ctx *Context) Err() error {
-	return nil
+	return ctx.Request.Context().Err()
 }
 
 func (ctx *Context) Value(key interface{}) interface{} {
@@ -51,9 +52,15 @@ func (ctx *Context) GetTraceId() string {
 }
 
 func (ctx *Context) Copy() *Context {
+    r, e := http.NewRequestWithContext(context.Background(), ctx.Request.Method, ctx.Request.RequestURI, ctx.Request.Body)
+    if e != nil {
+       r = ctx.Request
+    }
+    r.Clone(ctx.Request.Context())
+
 	c := &Context{
 		Writer:  ctx.Writer,
-		Request: ctx.Request,
+		Request: r,
 		Param:   ctx.Param,
 		TraceId: ctx.TraceId,
 		m:       sync.Map{},
