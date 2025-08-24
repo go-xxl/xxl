@@ -3,7 +3,7 @@
 # Installation
 
 ```go
-go get github.com/go-xxl/xxl@v0.0.2
+go get github.com/go-xxl/xxl@v0.0.4
 ```
 
 # Quickstart
